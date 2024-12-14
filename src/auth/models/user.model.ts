@@ -1,4 +1,8 @@
-import { Column, Model, Table } from "sequelize-typescript";
+import { Column, DataType, HasMany, Model, Table } from "sequelize-typescript";
+import { Advert } from "src/advert/models/advert.model";
+import { Message } from "src/message/message.model";
+import { v4 as uuidv4 } from "uuid";
+import { Token } from "./token.model";
 
 enum UserRole{
     ADMIN = 'admin',
@@ -12,6 +16,7 @@ enum UserRole{
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at',
+    deletedAt: 'deleted_at',
     scopes: {
         admins: {
             where: { role: UserRole.ADMIN }
@@ -31,48 +36,66 @@ enum UserRole{
 export class User extends Model {
     @Column({
         primaryKey: true,
-        autoIncrement: true
+        type: DataType.UUID,
+        defaultValue: uuidv4(),
     })
-    id: number;
+    id: string;
 
     @Column({
-        allowNull: false
+        allowNull: false,
+        type: DataType.STRING(50)
     })
     first_name: string;
 
     @Column({
-        allowNull: false
+        allowNull: false,
+        type: DataType.STRING(50)
     })
     last_name: string;
 
     @Column({
-        allowNull: false
+        allowNull: false,
+        type: DataType.STRING(320)
     })
     email: string;
 
     @Column({
-        allowNull: false
+        allowNull: false,
+        type: DataType.STRING
     })
     password: string;
     
     @Column({
         allowNull: false,
-        defaultValue: UserRole.GUEST
+        defaultValue: UserRole.GUEST,
+        type: DataType.ENUM(...Object.values(UserRole))
     })
     role: UserRole;
 
     @Column({
-        allowNull: false
+        allowNull: false,
+        type: DataType.STRING(20)
     })
     phone_number: string;
 
     @Column({
-        allowNull: true
+        allowNull: true,
+        type: DataType.STRING
     })
     location: string;
 
     @Column({
-        allowNull: true
+        allowNull: true,
+        type: DataType.TEXT
     })
     about_user: string;
+
+    @HasMany(() => Advert)
+    adverts: Advert[];
+
+    @HasMany(() => Message)
+    messages: Message[];
+
+    @HasMany(() => Token)
+    tokens: Token[];
 }

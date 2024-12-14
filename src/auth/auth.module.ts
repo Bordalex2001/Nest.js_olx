@@ -7,12 +7,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Token } from 'src/auth/models/token.model';
+import { JwtStrategy } from './jwt.strategy';
 
 //Зробити аутентифікацію користувача, з БД працювати через ORM
 //Реалізувати в моделях зв'язки між таблицями
 @Module({
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, JwtStrategy],
   imports: [
     ConfigModule,
     SequelizeModule.forFeature([User, Token]),
@@ -30,5 +31,6 @@ import { Token } from 'src/auth/models/token.model';
     }),
     PassportModule.register({ defaultStrategy: 'jwt' })
   ],
+  exports: [JwtStrategy, PassportModule]
 })
 export class AuthModule {}

@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { AuthModule } from './auth/auth.module';
+import { MessageModule } from './message/message.module';
+import { AdvertModule } from './advert/advert.module';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [
@@ -17,9 +20,13 @@ import { AuthModule } from './auth/auth.module';
       database: process.env.DB_NAME,
       timezone: process.env.DB_TIMEZONE,
       autoLoadModels: true,
-      synchronize: true
+      synchronize: true,
+      //sync: { alter: true }
     }),
-    AuthModule
+    AuthModule,
+    MessageModule,
+    AdvertModule,
+    CategoryModule
   ]
 })
 export class AppModule {}

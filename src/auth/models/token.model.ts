@@ -1,5 +1,5 @@
-import { DataTypes } from "sequelize";
-import { BelongsTo, Column, ForeignKey, Model, Table } from "sequelize-typescript";
+import { BelongsTo, Column, DataType, ForeignKey, Model, Table } from "sequelize-typescript";
+import { v4 as uuidv4 } from "uuid";
 import { User } from "src/auth/models/user.model";
 
 @Table({
@@ -11,25 +11,28 @@ import { User } from "src/auth/models/user.model";
 export class Token extends Model {
     @Column({
         primaryKey: true,
-        autoIncrement: true
+        type: DataType.UUID,
+        defaultValue: uuidv4()
     })
-    id: number;
+    id: string;
 
     @ForeignKey(() => User)
     @Column({
         allowNull: false,
+        type: DataType.UUID
     })
-    user_id: number;
+    user_id: string;
 
     @Column({
         allowNull: false,
-        unique: true
+        unique: true,
+        type: DataType.STRING
     })
     refresh_token: string;
     
     @Column({
         allowNull: false,
-        type: DataTypes.DATE
+        type: DataType.DATE
     })
     expires_at: Date;
 
