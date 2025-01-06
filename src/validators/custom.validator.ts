@@ -6,10 +6,9 @@ export class CustomValidator implements ValidatorConstraintInterface{
         value: any, 
         validationArguments?: ValidationArguments
     ): Promise<boolean> | boolean {
-        //return value.endsWith('gmail.com');
         return !value.endsWith('mail.ru');
     }
     defaultMessage(validationArguments?: ValidationArguments): string {
-        return 'No emails, end with mail.ru!';
+        return 'Emails, end with mail.ru, not allowed!';
     }
 }

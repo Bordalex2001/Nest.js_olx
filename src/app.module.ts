@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
 import { MessageModule } from './message/message.module';
 import { AdvertModule } from './advert/advert.module';
 import { CategoryModule } from './category/category.module';
@@ -23,7 +23,7 @@ import { CategoryModule } from './category/category.module';
       synchronize: true,
       //sync: { alter: true }
     }),
-    AuthModule,
+    UserModule,
     MessageModule,
     AdvertModule,
     CategoryModule

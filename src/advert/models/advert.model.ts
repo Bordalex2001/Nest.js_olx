@@ -1,11 +1,11 @@
 import { Column, DataType, ForeignKey, HasMany, Model, Table } from "sequelize-typescript";
-import { User } from "src/auth/models/user.model";
+import { User } from "src/user/models/user.model";
 import { v4 as uuidv4 } from "uuid";
 import { AdvertImage } from "./advert-image.model";
 import { Message } from "src/message/message.model";
 import { Category } from "src/category/category.model";
 
-enum AdvertStatus{
+export enum AdvertStatus{
     ACTIVE = 'active',
     SOLD = 'sold'
 }
@@ -39,7 +39,7 @@ export class Advert extends Model {
         allowNull: false,
         type: DataType.UUID
     })
-    user_id: number;
+    user_id: string;
 
     @Column({
         allowNull: false,
@@ -65,6 +65,12 @@ export class Advert extends Model {
         type: DataType.DECIMAL
     })
     price: number
+
+    @Column({
+        allowNull: true,
+        type: DataType.STRING
+    })
+    location: string;
 
     @Column({
         allowNull: false,

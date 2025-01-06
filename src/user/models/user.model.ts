@@ -4,7 +4,7 @@ import { Message } from "src/message/message.model";
 import { v4 as uuidv4 } from "uuid";
 import { Token } from "./token.model";
 
-enum UserRole{
+export enum UserRole{
     ADMIN = 'admin',
     BUYER = 'buyer',
     SELLER = 'seller',
@@ -80,15 +80,21 @@ export class User extends Model {
 
     @Column({
         allowNull: true,
-        type: DataType.STRING
-    })
-    location: string;
-
-    @Column({
-        allowNull: true,
         type: DataType.TEXT
     })
     about_user: string;
+
+    @Column({ 
+        type: DataType.STRING, 
+        allowNull: true 
+    })
+    reset_token: string;
+
+    @Column({ 
+        type: DataType.DATE, 
+        allowNull: true 
+    })
+    reset_token_expires: Date;
 
     @HasMany(() => Advert)
     adverts: Advert[];

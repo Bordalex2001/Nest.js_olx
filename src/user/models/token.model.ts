@@ -1,6 +1,6 @@
 import { BelongsTo, Column, DataType, ForeignKey, Model, Table } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
-import { User } from "src/auth/models/user.model";
+import { User } from "src/user/models/user.model";
 
 @Table({
     tableName: "tokens",

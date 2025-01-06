@@ -1,5 +1,6 @@
-import { IsEmail, IsEmpty, IsNotEmpty, IsPhoneNumber, IsString, Length, Validate } from "class-validator";
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Length, Validate } from "class-validator";
 import { CustomValidator } from "src/validators/custom.validator";
+import { UserRole } from "../models/user.model";
 
 export class RegisterDto {
     @IsNotEmpty()
@@ -22,11 +23,15 @@ export class RegisterDto {
     @Length(8)
     readonly password: string;
 
+    @IsOptional()
+    @IsEnum(UserRole)
+    readonly role?: UserRole;
+
     @IsNotEmpty()
     @IsPhoneNumber()
     readonly phone_number: string;
 
-    readonly location?: string;
-
+    @IsOptional()
+    @IsString()
     readonly about_user?: string;
 }
