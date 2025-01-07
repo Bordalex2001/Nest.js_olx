@@ -1,7 +1,12 @@
-import { IsEmail, IsNotEmpty } from "class-validator";
+import { IsNotEmpty, IsString, Length } from "class-validator";
 
 export class ResetPassDto {
     @IsNotEmpty()
-    @IsEmail({}, { message: 'This is not an email' })
-    readonly email: string;
+    @IsString()
+    readonly reset_token: string;
+
+    @IsNotEmpty()
+    @IsString()
+    @Length(8)
+    readonly new_password: string;
 }

@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { User } from './models/user.model';
 import { InjectModel } from '@nestjs/sequelize';
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
@@ -26,13 +26,13 @@ export class UserService {
       throw new ConflictException('User with this email already exists');
     }
     
-    const passwordHash = await bcrypt.hash(password, 10);
+    const password_hash = await bcrypt.hash(password, 10);
 
     const user = await this.userModel.create({ 
       first_name,
       last_name,
       email, 
-      password: passwordHash,
+      password: password_hash,
       role: role || 'guest',
       phone_number,
       about_user
@@ -42,7 +42,7 @@ export class UserService {
     return { message: 'User registered successfully', userId: user.id };
   }
 
-  async signIn(loginDto: LoginDto): Promise<{ accessToken: string }> {
+  async signIn(loginDto: LoginDto): Promise<{ access_token: string }> {
     const { email, password } = loginDto;
 
     const user = await this.userModel.findOne({ where: { email }});
@@ -58,26 +58,24 @@ export class UserService {
       role: user.role 
     };
     
-    const accessToken = this.jwtService.sign(payload);
+    const access_token = this.jwtService.sign(payload);
 
     this.logger.log(`User authorized with email: ${email}`);
-    return { accessToken };
+    return { access_token };
   }
 
-  async sendPasswordResetEmail(resetPassDto: ResetPassDto): Promise<any> {
-    const { email } = resetPassDto;
-
+  async sendPasswordResetEmail(email: string): Promise<any> {
     const user = await this.userModel.findOne({ where: { email } });
     if (!user) {
       throw new NotFoundException('User with this email does not exist');
     }
 
-    const resetToken = crypto.randomBytes(20).toString("hex");
-    const resetTokenExpires = new Date(Date.now() + 3600 * 1000);
+    const reset_token = crypto.randomBytes(20).toString("hex");
+    const reset_token_expires = new Date(Date.now() + 3600 * 1000);
 
     await this.userModel.update(
-      { resetToken, resetTokenExpires },
-      { where: { email } },
+      { reset_token, reset_token_expires },
+      { where: { email: user.email } }
     );
 
     const transporter = nodemailer.createTransport({
@@ -88,33 +86,33 @@ export class UserService {
       }
     });
 
-    const resetLink = `http://localhost:${process.env.PORT}/reset-password/${resetToken}`;
     await transporter.sendMail({
       from: process.env.SMTP_USER,
       to: email,
       subject: 'Password Reset Request',
-      html: `
-        <h3>Password Reset Request</h3>
-        <p>Click the link below to reset your password. The link is valid for 1 hour:</p>
-        <a href="${resetLink}">${resetLink}</a>
-      `,
+      html: `<p>Token to reset your password is: <b>${reset_token}</b></p>`
     });
 
     this.logger.log(`Password reset email sent to: ${email}`);
     return { message: 'Password reset email sent' };
   }
 
-  async resetPassword(resetToken: string, newPassword: string): Promise<any> {
-    const user = await this.userModel.findOne({ where: { resetToken } });
-    if (!user || user.reset_token_expires < new Date()) {
-      throw new BadRequestException('Invalid or expired reset token');
+  async resetPassword(resetPassDto: ResetPassDto): Promise<any> {
+    const { reset_token, new_password } = resetPassDto;
+
+    const user = await this.userModel.findOne({ where: { reset_token } });
+    if (reset_token !== user.reset_token || Date.now() > user.reset_token_expires.getTime()) {
+      throw new BadRequestException('Invalid or expired token');
     }
 
-    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const password_hash = await bcrypt.hash(new_password, 10);
     await this.userModel.update(
-      { password: passwordHash, resetToken: null, resetTokenExpires: null },
-      { where: { id: user.id } },
+      { password: password_hash, reset_token: null, reset_token_expires: null },
+      { where: { reset_token } }
     );
+
+    this.logger.log(`Password reset for user: ${user.email}`);
+    return { message: 'Password reset successfully' };
   }
 
   async findAll() {

@@ -16,22 +16,20 @@ export class UserController {
 
   @UsePipes(new ValidationPipe())
   @Post('/signin')
-  signIn(@Body() loginDto: LoginDto): Promise<{ accessToken: string }> {
+  signIn(@Body() loginDto: LoginDto): Promise<{ access_token: string }> {
     return this.userService.signIn(loginDto);
   }
 
   @UsePipes(new ValidationPipe())
   @Post('/forgot-password')
-  forgotPassword(@Body() resetPassDto: ResetPassDto): Promise<any> {
-    return this.userService.sendPasswordResetEmail(resetPassDto);
+  forgotPassword(@Body('email') email: string): Promise<any> {
+    return this.userService.sendPasswordResetEmail(email);
   }
 
   @UsePipes(new ValidationPipe())
-  @Post('/reset-password/:token')
-  resetPassword(
-    @Param('token') token: string, 
-    @Body() newPassword: string): Promise<any> {
-    return this.userService.resetPassword(token, newPassword);
+  @Post('/reset-password')
+  resetPassword(@Body() resetPassDto: ResetPassDto): Promise<any> {
+    return this.userService.resetPassword(resetPassDto);
   }
 
   /*@Get()
