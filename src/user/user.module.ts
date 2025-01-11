@@ -8,16 +8,16 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Token } from 'src/user/models/token.model';
 import { JwtStrategy } from './jwt.strategy';
+import { CacheModule } from '@nestjs/cache-manager';
 
-//Зробити аутентифікацію користувача, з БД працювати через ORM
-//Реалізувати в моделях зв'язки між таблицями
-//У моделі додати зв'язки між таблицями, реалізуйте відновлення пароля користувача (через пошту)
+//Реалізуйте обов'язково кешування даних у своєму проекті
 @Module({
   controllers: [UserController],
   providers: [UserService, JwtStrategy],
   imports: [
     ConfigModule,
     SequelizeModule.forFeature([User, Token]),
+    CacheModule.register(),
     JwtModule.registerAsync({
         imports: [ConfigModule],
         inject: [ConfigService],

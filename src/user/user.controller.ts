@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UsePipes, ValidationPipe, Param } from '@nestjs/common';
+import { Controller, Post, Body, UsePipes, ValidationPipe, Param, Get } from '@nestjs/common';
 import { UserService } from './user.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -32,17 +32,17 @@ export class UserController {
     return this.userService.resetPassword(resetPassDto);
   }
 
-  /*@Get()
+  @Get()
   findAll() {
-    return this.authService.findAll();
+    return this.userService.findAll();
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
+    return this.userService.findOne(id);
   }
 
-  @Patch(':id')
+  /*@Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.authService.update(+id, updateUserDto);
   }

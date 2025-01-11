@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { User } from './models/user.model';
 import { InjectModel } from '@nestjs/sequelize';
 import * as bcrypt from 'bcryptjs';
@@ -8,11 +8,14 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import * as nodemailer from 'nodemailer';
 import { ResetPassDto } from './dto/reset-pass.dto';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class UserService {
   private readonly logger: Logger = new Logger(UserService.name);
   constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectModel(User) private readonly userModel: typeof User,
     private readonly jwtService: JwtService
   ) {}
@@ -46,6 +49,7 @@ export class UserService {
     const { email, password } = loginDto;
 
     const user = await this.userModel.findOne({ where: { email }});
+    
     if (!user || !(await bcrypt.compare(password, user.password))) {
       this.logger.error(`Invalid credentials for email: ${email}`);
       throw new UnauthorizedException('Invalid credentials');
@@ -71,12 +75,14 @@ export class UserService {
     }
 
     const reset_token = crypto.randomBytes(20).toString("hex");
-    const reset_token_expires = new Date(Date.now() + 3600 * 1000);
+    //const reset_token_expires = new Date(Date.now() + 3600 * 1000);
 
-    await this.userModel.update(
+    /*await this.userModel.update(
       { reset_token, reset_token_expires },
       { where: { email: user.email } }
-    );
+    );*/
+
+    await this.cacheManager.set(`password-reset:${reset_token}`, user.email, 3600000);
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -100,49 +106,74 @@ export class UserService {
   async resetPassword(resetPassDto: ResetPassDto): Promise<any> {
     const { reset_token, new_password } = resetPassDto;
 
-    const user = await this.userModel.findOne({ where: { reset_token } });
-    if (reset_token !== user.reset_token || Date.now() > user.reset_token_expires.getTime()) {
-      throw new BadRequestException('Invalid or expired token');
+    const email = await this.cacheManager.get(`password-reset:${reset_token}`);
+    if (!email) {
+      throw new BadRequestException('Invalid or expired reset token');
     }
 
     const password_hash = await bcrypt.hash(new_password, 10);
+
     await this.userModel.update(
-      { password: password_hash, reset_token: null, reset_token_expires: null },
-      { where: { reset_token } }
+      { password: password_hash },
+      { where: { email } }
     );
 
-    this.logger.log(`Password reset for user: ${user.email}`);
+    await this.cacheManager.del(`password-reset:${reset_token}`);
+
+    this.logger.log(`Password reset for email: ${email}`);
     return { message: 'Password reset successfully' };
   }
 
   async findAll() {
-    return await this.userModel.findAll();
+    const cached_users = await this.cacheManager.get('users');
+    if (cached_users) {
+      this.logger.log('Fetching all users from cache');
+      return cached_users as User[];
+    }
+    
+    const users = await this.userModel.findAll();
+    await this.cacheManager.set('users', users, 300000);
+    this.logger.log('Fetching all users');
+    return users;
   }
 
-  async findOne(id: string) {
-    return await this.userModel.findByPk(id);
+  async findOne(id: string){
+    const cached_user = await this.cacheManager.get(`user:${id}`);
+    if (cached_user) {
+      this.logger.log(`Fetching user with id: ${id} from cache`);
+      return cached_user as User;
+    }
+
+    const user = await this.userModel.findByPk(id);
+    if (!user) {
+      this.logger.error(`User not found: ${id}`);
+      throw new NotFoundException('User not found');
+    }
+    
+    await this.cacheManager.set(`user:${id}`, user, 300000);
+    this.logger.log(`Fetching user with id: ${id}`);
+    return user;
+  }
+
+  async removeFromCache(id: string) {
+    await this.cacheManager.del(`user:${id}`);
+    this.logger.log(`User with id: ${id} removed from cache`);
+    return { message: 'User removed from cache' };
   }
 
   async update(id: string, updateUserDto) {
-    const rows = await this.userModel.update(updateUserDto, {
-      where: { id }
-    });
-    this.logger.log(`Update row ${rows}`);
-    if(rows[0]){
-      return { id, ...updateUserDto };
-    }
-    return `User #${id} not found`;
+    const user = await this.findOne(id);
+
+    await user.update(updateUserDto);
+    this.logger.log(`Updating user with id: ${id}`);
+    return { message: 'User updated successfully' };
   }
 
   async remove(id: string) {
-    const rows = await this.userModel.destroy
-    ({
-      where: { id }
-    });
-    this.logger.log(`Delete row ${rows}`);
-    if(rows[0]){
-      return `User #${id} has been removed`;
-    }
-    return `User #${id} not found`;
+    const user = await this.findOne(id);
+
+    await user.destroy();
+    this.logger.log(`Deleting user with id: ${id}`);
+    return { message: 'User deleted successfully' };
   }
 }

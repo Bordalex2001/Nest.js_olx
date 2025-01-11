@@ -5,14 +5,15 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { Advert } from './models/advert.model';
 import { AdvertImage } from './models/advert-image.model';
 import { Category } from 'src/category/category.model';
-import { CategoryModule } from 'src/category/category.module';
+import { CacheModule } from '@nestjs/cache-manager';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   controllers: [AdvertController],
-  providers: [AdvertService],
+  providers: [AdvertService, JwtService],
   imports: [
     SequelizeModule.forFeature([Advert, AdvertImage, Category]),
-    CategoryModule
-  ]
+    CacheModule.register(),
+  ],
 })
 export class AdvertModule {}
