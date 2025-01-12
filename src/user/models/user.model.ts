@@ -84,17 +84,17 @@ export class User extends Model {
     })
     about_user: string;
 
-    @Column({ 
+    /*@Column({ 
         type: DataType.STRING, 
         allowNull: true 
     })
-    reset_token: string;
+    reset_token: string;*/
 
-    @Column({ 
+    /*@Column({ 
         type: DataType.DATE, 
         allowNull: true 
     })
-    reset_token_expires: Date;
+    reset_token_expires: Date;*/
 
     @HasMany(() => Advert)
     adverts: Advert[];

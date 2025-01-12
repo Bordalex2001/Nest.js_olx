@@ -46,6 +46,15 @@ export class Message extends Model {
     })
     content: string;
 
+    @Column({ 
+        type: DataType.BOOLEAN, 
+        defaultValue: false 
+    })
+    is_read: boolean;
+
     @BelongsTo(() => User)
     user: User;
+
+    @BelongsTo(() => Advert)
+    advert: Advert;
 }

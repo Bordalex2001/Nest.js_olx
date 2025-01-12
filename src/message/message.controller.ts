@@ -1,34 +1,63 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/guards/roles.guard';
+import { Roles } from 'src/decorators/roles.decorator';
 
 @Controller('message')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}
 
+  @UsePipes(new ValidationPipe())
   @Post()
-  create(@Body() req: any, createMessageDto: CreateMessageDto) {
-    return this.messageService.create(req, createMessageDto);
+  @Roles('admin', 'seller', 'buyer')
+  create(@Body() createMessageDto: CreateMessageDto, @Param('user_id') user_id: string) {
+    return this.messageService.create(createMessageDto, user_id);
   }
 
-  @Get()
-  findAll(@Body() req: any) {
-    return this.messageService.findAll(req);
+  @Get(':advert_id/:user1_id/:user2_id')
+  @Roles('admin', 'seller', 'buyer')
+  findAllByAdvert(
+    @Param('user1_id') user1_id: string, 
+    @Param('user2_id') user2_id: string, 
+    @Param('advert_id') advert_id: string) {
+    return this.messageService.findAllByAdvert(user1_id, user2_id, advert_id);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string, @Body() req: any) {
-    return this.messageService.findOne(req, id);
+  @Get(':id/:advert_id/:user1_id/:user2_id')
+  @Roles('admin', 'seller', 'buyer')
+  findOneByAdvert(
+    @Param('id') id: string,
+    @Param('user1_id') user1_id: string,
+    @Param('user2_id') user2_id: string,
+    @Param('advert_id') advert_id: string) {
+    return this.messageService.findOneByAdvert(id, user1_id, user2_id, advert_id);
   }
 
+  @UsePipes(new ValidationPipe())
   @Patch(':id')
-  update(@Param('id') id: string, @Body() req: any, updateMessageDto: UpdateMessageDto) {
-    return this.messageService.update(req, id, updateMessageDto);
+  @Roles('admin', 'seller', 'buyer')
+  update(
+    @Param('id') id: string, 
+    @Param('user_id') user_id: string,
+    @Body() updateMessageDto: UpdateMessageDto) {
+    return this.messageService.update(id, updateMessageDto, user_id);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Body() req: any) {
-    return this.messageService.remove(req, id);
+  @Roles('admin', 'seller', 'buyer')
+  remove(
+    @Param('id') id: string,
+    @Param('user_id') user_id: string) {
+    return this.messageService.remove(id, user_id);
+  }
+
+  @Patch(':id/read')
+  @Roles('admin', 'seller', 'buyer')
+  markAsRead(@Param('id') id: string) {
+    return this.messageService.markAsRead(id);
   }
 }
